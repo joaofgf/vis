@@ -19,7 +19,7 @@
     <script src="../../src/DOMTimeline/hammer.min.js" charset="utf-8"></script>
     <script src="../../src/DOMTimeline/moment-with-langs.min.js"></script>
     <script src="../../src/DOMTimeline/Item.js"></script>
-    <script src="../../src/DOMTimeline/svgTimeline.js"></script>
+    <script src="../../src/DOMTimeline/DOMTimeline.js"></script>
     <link href="../../dist/vis.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -36,7 +36,7 @@
         {id: 6, content: 'item 6', start: '2014-02-27'}
     ];
     var options = {};
-    var timeline = new SvgTimeline(container, items, options);
+    var timeline = new DOMTimeline(container, items, options);
 </script>
 </body>
 </html>

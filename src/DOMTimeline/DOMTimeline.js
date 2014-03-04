@@ -4,7 +4,7 @@
 
 
 
-function SvgAxis (range,mainId, constants) {
+function DOMAxis (range,mainId, constants) {
   this.svgId = mainId;
   this.range = range;
   this.constants = constants;
@@ -15,14 +15,14 @@ function SvgAxis (range,mainId, constants) {
   this._update();
 }
 
-SvgAxis.prototype._drawElements = function() {
+DOMAxis.prototype._drawElements = function () {
   d3.select(this.svgId)
     .append("rect")
-    .attr("id","bars")
-    .attr("x",0)
-    .attr("y",0)
+    .attr("id", "bars")
+    .attr("x", 0)
+    .attr("y", 0)
     .attr("width", this.constants.width)
-    .attr("height",this.constants.barHeight)
+    .attr("height", this.constants.barHeight)
     .style("stroke", "rgb(6,120,155)");
 
   this.leftText = d3.select(this.svgId)
@@ -36,56 +36,55 @@ SvgAxis.prototype._drawElements = function() {
     .append("text")
     .attr("y", 20)
     .attr("font-size", 14)
-    .text(moment(this.range.end))
+    .text(moment(this.range.end));
   this.rightText.attr("x", this.constants.width - 5 - this.rightText.node().getBBox().width);
 
   this.dateLabels = {};
   this.markerLines = {};
-}
+};
 
-SvgAxis.prototype._createMarkerLine = function(index) {
-  this.markerLines[index] = {svg:d3.select("svg#main").append("line")
-    .attr('y1',0)
-    .attr('y2',this.constants.height)
+DOMAxis.prototype._createMarkerLine = function (index) {
+  this.markerLines[index] = {svg: d3.select("svg#main").append("line")
+    .attr('y1', 0)
+    .attr('y2', this.constants.height)
     .style("stroke", "rgb(220,220,220)")
   }
-}
+};
 
-SvgAxis.prototype._createDateLabel = function(index) {
-  this.dateLabels[index] = {svg:d3.select(this.svgId)
+DOMAxis.prototype._createDateLabel = function (index) {
+  this.dateLabels[index] = {svg: d3.select(this.svgId)
     .append("text")
-    .attr("font-size",12)
-    , active:false};
-}
+    .attr("font-size", 12), active: false};
+};
 
-SvgAxis.prototype._update = function() {
+DOMAxis.prototype._update = function () {
   this.duration = this.range.end - this.range.start; // in milliseconds
-  this.leftText.text(moment(this.range.start).format("DD-MM-YYYY HH:mm:ss"))
+  this.leftText.text(moment(this.range.start).format("DD-MM-YYYY HH:mm:ss"));
 
-  this.rightText.text(moment(this.range.end).format("DD-MM-YYYY"))
+  this.rightText.text(moment(this.range.end).format("DD-MM-YYYY"));
   this.rightText.attr("x", this.constants.width - 5 - this.rightText.node().getBBox().width);
 
   this.msPerPixel = this.duration / this.constants.width;
   this.columnDuration = this.minColumnWidth * this.msPerPixel;
 
-  var milliSecondScale = [1,10,50,100,250,500];
-  var secondScale = [1,5,15,30];
-  var minuteScale = [1,5,15,30];
-  var hourScale = [1,3,6,12];
-  var dayScale = [1,2,3,5,10,15];
-  var monthScale = [1,2,3,4,5,6];
-  var yearScale = [1,2,3,4,5,6,7,8,9,10,15,20,25,50,75,100,150,250,500,1000];
-  var multipliers = [1,1000,60000,3600000,24*3600000,30*24*3600000,365*24*3600000];
-  var scales = [milliSecondScale,secondScale,minuteScale,hourScale,dayScale,monthScale,yearScale]
-  var formats = ["SSS","mm:ss","hh:mm:ss","DD HH:mm","DD-MM","MM-YYYY","YYYY"]
-  var indices = this._getAppropriateScale(scales,multipliers);
+  var milliSecondScale = [1, 10, 50, 100, 250, 500];
+  var secondScale = [1, 5, 15, 30];
+  var minuteScale = [1, 5, 15, 30];
+  var hourScale = [1, 3, 6, 12];
+  var dayScale = [1, 2, 3, 5, 10, 15];
+  var monthScale = [1, 2, 3, 4, 5, 6];
+  var yearScale = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, 50, 75, 100, 150, 250, 500, 1000];
+  var multipliers = [1, 1000, 60000, 3600000, 24 * 3600000, 30 * 24 * 3600000, 365 * 24 * 3600000];
+  var scales = [milliSecondScale, secondScale, minuteScale, hourScale, dayScale, monthScale, yearScale];
+  var formats = ["SSS", "mm:ss", "hh:mm:ss", "DD HH:mm", "DD-MM", "MM-YYYY", "YYYY"];
+  var indices = this._getAppropriateScale(scales, multipliers);
   var scale = scales[indices[0]][indices[1]] * multipliers[indices[0]];
 
-  var dateCorrection = (this.range.start.valueOf() % scale) +3600000;
+  var dateCorrection = (this.range.start.valueOf() % scale) + 3600000;
 
   for (var i = 0; i < 30; i++) {
-    var date = this.range.start + i*scale - dateCorrection;
-    if (((i+1)*scale - dateCorrection)/this.msPerPixel > this.constants.width + 200) {
+    var date = this.range.start + i * scale - dateCorrection;
+    if (((i + 1) * scale - dateCorrection) / this.msPerPixel > this.constants.width + 200) {
       if (this.dateLabels.hasOwnProperty(i)) {
         this.dateLabels[i].svg.remove();
         delete this.dateLabels[i]
@@ -104,27 +103,28 @@ SvgAxis.prototype._update = function() {
       }
 
       this.dateLabels[i].svg.text(moment(date).format(formats[indices[0]]))
-        .attr("x",(i*scale - dateCorrection)/this.msPerPixel)
-        .attr("y",50)
-      this.markerLines[i].svg.attr("x1",(i*scale - dateCorrection)/this.msPerPixel)
-                             .attr("x2",(i*scale - dateCorrection)/this.msPerPixel)
+        .attr("x", (i * scale - dateCorrection) / this.msPerPixel)
+        .attr("y", 50);
+      this.markerLines[i].svg.attr("x1", (i * scale - dateCorrection) / this.msPerPixel)
+        .attr("x2", (i * scale - dateCorrection) / this.msPerPixel)
     }
   }
-}
+};
 
-SvgAxis.prototype._getAppropriateScale = function(scales,multipliers) {
+DOMAxis.prototype._getAppropriateScale = function (scales, multipliers) {
   for (var i = 0; i < scales.length; i++) {
     for (var j = 0; j < scales[i].length; j++) {
       if (scales[i][j] * multipliers[i] > this.columnDuration) {
-          return [i,j]
+        return [i, j]
       }
     }
   }
-}
+  return false;
+};
 
 
 /**
- * @constructor SvgTimeline
+ * @constructor DOMTimeline
  * Create a graph visualization, displaying nodes and edges.
  *
  * @param {Element} container   The DOM element in which the Graph will
@@ -134,18 +134,18 @@ SvgAxis.prototype._getAppropriateScale = function(scales,multipliers) {
  *                              {Array} edges
  * @param {Object} options      Options
  */
-function SvgTimeline (container, items, options) {
+function DOMTimeline (container, items, options) {
   this.constants = {
-    width:1400,
-    height:400,
+    width: 1400,
+    height: 400,
     barHeight: 60
-  }
+  };
 
   var now = moment().hours(0).minutes(0).seconds(0).milliseconds(0);
   this.range = {
-                start:now.clone().add('days', -3).valueOf(),
-                end:  now.clone().add('days', 4).valueOf()
-               }
+    start: now.clone().add('days', -3).valueOf(),
+    end: now.clone().add('days', 4).valueOf()
+  };
 
   this.items = {};
   this.sortedItems = [];
@@ -158,7 +158,7 @@ function SvgTimeline (container, items, options) {
   this._createSVG();
 
 
-  this.axis = new SvgAxis(this.range,"svg#main",this.constants);
+  this.axis = new DOMAxis(this.range,"svg#main",this.constants);
 
   var me = this;
   this.hammer = Hammer(document.getElementById("main"), {
@@ -182,7 +182,7 @@ function SvgTimeline (container, items, options) {
 
 }
 
-SvgTimeline.prototype._createSVG = function() {
+DOMTimeline.prototype._createSVG = function() {
   d3.select("div#visualization")
     .append("svg").attr("id","main")
     .attr("width",this.constants.width)
@@ -190,34 +190,36 @@ SvgTimeline.prototype._createSVG = function() {
     .attr("style","border:1px solid black")
 };
 
-SvgTimeline.prototype._createItems = function (items) {
+DOMTimeline.prototype._createItems = function (items) {
   for (var i = 0; i < items.length; i++) {
     this.items[items[i].id] = new Item(items[i], this.constants);
     this.sortedItems.push(this.items[items[i].id]);
   }
   this._sortItems(this.sortedItems);
-}
+};
 
-SvgTimeline.prototype._sortItems = function (items) {
-  items.sort(function(a,b) {return a.start - b.start});
-}
+DOMTimeline.prototype._sortItems = function (items) {
+  items.sort(function (a, b) {
+    return a.start - b.start
+  });
+};
 
-SvgTimeline.prototype._getPointer = function (touch) {
+DOMTimeline.prototype._getPointer = function (touch) {
   return {
     x: touch.pageX,
     y: touch.pageY
   };
 };
 
-SvgTimeline.prototype._onTap = function() {};
-SvgTimeline.prototype._onDoubleTap = function() {};
-SvgTimeline.prototype._onHold = function() {};
-SvgTimeline.prototype._onPinch = function() {};
-SvgTimeline.prototype._onTouch = function(event) {};
-SvgTimeline.prototype._onDragStart = function(event) {
+DOMTimeline.prototype._onTap = function() {};
+DOMTimeline.prototype._onDoubleTap = function() {};
+DOMTimeline.prototype._onHold = function() {};
+DOMTimeline.prototype._onPinch = function() {};
+DOMTimeline.prototype._onTouch = function(event) {};
+DOMTimeline.prototype._onDragStart = function(event) {
   this.initialDragPos = this._getPointer(event.gesture.center);
 };
-SvgTimeline.prototype._onDrag = function(event) {
+DOMTimeline.prototype._onDrag = function(event) {
   var pointer = this._getPointer(event.gesture.center);
   var diffX = pointer.x - this.initialDragPos.x;
 //  var diffY = pointer.y - this.initialDragPos.y;
@@ -228,9 +230,9 @@ SvgTimeline.prototype._onDrag = function(event) {
   this.range.end -= diffX * this.axis.msPerPixel;
   this._update();
 };
-SvgTimeline.prototype._onDragEnd = function() {};
-SvgTimeline.prototype._onRelease = function() {};
-SvgTimeline.prototype._onMouseWheel = function(event) {
+DOMTimeline.prototype._onDragEnd = function() {};
+DOMTimeline.prototype._onRelease = function() {};
+DOMTimeline.prototype._onMouseWheel = function(event) {
 
   var delta = 0;
   if (event.wheelDelta) { /* IE/Opera. */
@@ -242,7 +244,7 @@ SvgTimeline.prototype._onMouseWheel = function(event) {
     delta = -event.detail/3;
   }
   if (delta) {
-    var pointer = {x:event.x, y:event.y}
+    var pointer = {x: event.x, y: event.y};
     var center = this.range.start + this.axis.duration * 0.5;
     var zoomSpeed = 0.1;
     var scrollSpeed = 0.1;
@@ -260,15 +262,15 @@ SvgTimeline.prototype._onMouseWheel = function(event) {
     this._update();
   }
 };
-SvgTimeline.prototype._onMouseMoveTitle = function() {};
+DOMTimeline.prototype._onMouseMoveTitle = function() {};
 
-SvgTimeline.prototype._update = function() {
+DOMTimeline.prototype._update = function() {
   this.axis._update();
   this._getActiveItems();
   this._updateItems();
 };
 
-SvgTimeline.prototype._getActiveItems = function() {
+DOMTimeline.prototype._getActiveItems = function() {
   // reset all currently active items to inactive
   for (var itemId in this.activeItems) {
     if (this.activeItems.hasOwnProperty(itemId)) {
@@ -276,9 +278,9 @@ SvgTimeline.prototype._getActiveItems = function() {
     }
   }
 
-  this.sortedActiveItems = []
-  var rangeStart = this.range.start-200*this.axis.msPerPixel
-  var rangeEnd = (this.range.end+200*this.axis.msPerPixel)
+  this.sortedActiveItems = [];
+  var rangeStart = this.range.start - 200 * this.axis.msPerPixel;
+  var rangeEnd = (this.range.end + 200 * this.axis.msPerPixel);
   for (var itemId in this.items) {
     if (this.items.hasOwnProperty(itemId)) {
       if (this.items[itemId].start >= rangeStart && this.items[itemId].start < rangeEnd ||
@@ -308,7 +310,7 @@ SvgTimeline.prototype._getActiveItems = function() {
 };
 
 
-SvgTimeline.prototype._updateItems = function() {
+DOMTimeline.prototype._updateItems = function() {
   for (var i = 0; i < this.sortedActiveItems.length; i++) {
     var item = this.sortedActiveItems[i];
     if (item.svg == null) {
@@ -318,7 +320,7 @@ SvgTimeline.prototype._updateItems = function() {
 //                   .style("stroke", "rgb(6,120,155)")
 //                   .style("fill", "rgb(6,120,155)");
       item.svg = d3.select("svg#main")
-                .append("foreignObject")
+        .append("foreignObject");
       item.svgContent = item.svg.append("xhtml:body")
         .style("font", "14px 'Helvetica Neue'")
         .style("background-color", "#ff00ff")
@@ -334,12 +336,12 @@ SvgTimeline.prototype._updateItems = function() {
                          .style("stroke-width", 3)
       }
     }
-    item.svg.attr('width',item.getLength(this.axis.msPerPixel))
-            .attr("x",this._getXforItem(item))
-            .attr("y",this._getYforItem(item, i))
+    item.svg.attr('width', item.getLength(this.axis.msPerPixel))
+      .attr("x", this._getXforItem(item))
+      .attr("y", this._getYforItem(item, i))
 
 
-            .attr('height',25)
+      .attr('height', 25);
     if (item.end == 0) {
       item.svgLine.attr('y2',item.y)
                   .attr('x1',item.timeX)
@@ -348,8 +350,8 @@ SvgTimeline.prototype._updateItems = function() {
   }
 };
 
-SvgTimeline.prototype._getXforItem = function(item) {
-  item.timeX = (item.start - this.range.start)/this.axis.msPerPixel;
+DOMTimeline.prototype._getXforItem = function (item) {
+  item.timeX = (item.start - this.range.start) / this.axis.msPerPixel;
   if (item.end == 0) {
     item.drawX = item.timeX - item.width * 0.5;
   }
@@ -357,11 +359,11 @@ SvgTimeline.prototype._getXforItem = function(item) {
     item.drawX = item.timeX;
   }
   return item.drawX;
-}
+};
 
-SvgTimeline.prototype._getYforItem = function(item, index) {
+DOMTimeline.prototype._getYforItem = function (item, index) {
   var bounds = 10;
-  var startIndex = Math.max(0,index-bounds);
+  var startIndex = Math.max(0, index - bounds);
   item.level = 0;
   for (var i = startIndex; i < index; i++) {
     var item2 = this.sortedActiveItems[i];
@@ -369,6 +371,6 @@ SvgTimeline.prototype._getYforItem = function(item, index) {
       item.level += 1;
     }
   }
-  item.y = 100 + 50*item.level;
+  item.y = 100 + 50 * item.level;
   return item.y;
-}
+};
