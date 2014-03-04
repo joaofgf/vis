@@ -4,8 +4,8 @@
 
 
 
-function DOMAxis (range,mainId, constants) {
-  this.svgId = mainId;
+function DOMAxis (range,frame, constants) {
+  this.frame = frame;
   this.range = range;
   this.constants = constants;
   this.duration = this.range.end - this.range.start; // in milliseconds
@@ -16,53 +16,77 @@ function DOMAxis (range,mainId, constants) {
 }
 
 DOMAxis.prototype._drawElements = function () {
-  d3.select(this.svgId)
-    .append("rect")
-    .attr("id", "bars")
-    .attr("x", 0)
-    .attr("y", 0)
-    .attr("width", this.constants.width)
-    .attr("height", this.constants.barHeight)
-    .style("stroke", "rgb(6,120,155)");
+  this.mainBox = document.createElement("div");
+  this.mainBox.className = "mainBox";
+  this.mainBox.style.position = "absolute";
+  this.mainBox.style.top = "-1px";
+  this.mainBox.style.left = "-1px";
+  this.mainBox.style.width = this.constants.width + "px";
+  this.mainBox.style.height = this.constants.barHeight + "px";
+  this.frame.appendChild(this.mainBox);
 
-  this.leftText = d3.select(this.svgId)
-    .append("text")
-    .attr("x", 5)
-    .attr("y", 20)
-    .attr("font-size", 14)
-    .text(moment(this.range.start));
+  this.leftText = document.createElement("div");
+  this.leftText.innerHTML = moment(this.range.start);
+  this.leftText.style.position = "absolute";
+  this.leftText.style.display = "inline";
+  this.leftText.style.left = "5px";
+  this.mainBox.appendChild(this.leftText);
 
-  this.rightText = d3.select(this.svgId)
-    .append("text")
-    .attr("y", 20)
-    .attr("font-size", 14)
-    .text(moment(this.range.end));
-  this.rightText.attr("x", this.constants.width - 5 - this.rightText.node().getBBox().width);
+  this.rightText = document.createElement("div");
+  this.rightText.innerHTML = moment(this.range.end);
+  this.rightText.style.position = "absolute";
+  this.rightText.style.display = "inline";
+  this.mainBox.appendChild(this.rightText);
 
+
+//  this.leftText = document.createElement("div");
+//    .append("text")
+//    .attr("x", 5)
+//    .attr("y", 20)
+//    .attr("font-size", 14)
+//    .text(moment(this.range.start));
+//
+//  this.rightText = d3.select(this.svgId)
+//    .append("text")
+//    .attr("y", 20)
+//    .attr("font-size", 14)
+//    .text(moment(this.range.end));
+//  this.rightText.attr("x", this.constants.width - 5 - this.rightText.node().getBBox().width);
+//
   this.dateLabels = {};
   this.markerLines = {};
 };
 
 DOMAxis.prototype._createMarkerLine = function (index) {
-  this.markerLines[index] = {svg: d3.select("svg#main").append("line")
-    .attr('y1', 0)
-    .attr('y2', this.constants.height)
-    .style("stroke", "rgb(220,220,220)")
-  }
+  var line = document.createElement("div");
+      line.className = "line";
+      line.style.display = "inline";
+      line.style.width = "1px";
+      line.style.height = this.constants.height + "px";
+      line.style.position = "absolute";
+      line.style.padding = "0px";
+      line.style.spacing = "0px";
+  this.frame.appendChild(line);
+  this.markerLines[index] = {DOM: line}
 };
 
 DOMAxis.prototype._createDateLabel = function (index) {
-  this.dateLabels[index] = {svg: d3.select(this.svgId)
-    .append("text")
-    .attr("font-size", 12), active: false};
+  var text = document.createElement("div");
+      text.className = "text";
+      text.style.display = "inline";
+      text.style.position = "absolute";
+      text.style.whiteSpace = "nowrap";
+      text.style.top = "40px";
+  this.frame.appendChild(text);
+  this.dateLabels[index] = {DOM: text, active: false};
 };
 
 DOMAxis.prototype._update = function () {
   this.duration = this.range.end - this.range.start; // in milliseconds
-  this.leftText.text(moment(this.range.start).format("DD-MM-YYYY HH:mm:ss"));
+  this.leftText.innerHTML = moment(this.range.start).format("DD-MM-YYYY HH:mm:ss");
 
-  this.rightText.text(moment(this.range.end).format("DD-MM-YYYY"));
-  this.rightText.attr("x", this.constants.width - 5 - this.rightText.node().getBBox().width);
+  this.rightText.innerHTML = moment(this.range.end).format("DD-MM-YYYY");
+  this.rightText.style.left = String(this.constants.width - 5 - this.rightText.offsetWidth) + "px";
 
   this.msPerPixel = this.duration / this.constants.width;
   this.columnDuration = this.minColumnWidth * this.msPerPixel;
@@ -86,11 +110,11 @@ DOMAxis.prototype._update = function () {
     var date = this.range.start + i * scale - dateCorrection;
     if (((i + 1) * scale - dateCorrection) / this.msPerPixel > this.constants.width + 200) {
       if (this.dateLabels.hasOwnProperty(i)) {
-        this.dateLabels[i].svg.remove();
+        this.frame.removeChild(this.dateLabels[i].DOM);
         delete this.dateLabels[i]
       }
       if (this.markerLines.hasOwnProperty(i)) {
-        this.markerLines[i].svg.remove();
+        this.frame.removeChild(this.markerLines[i].DOM)
         delete this.markerLines[i]
       }
     }
@@ -102,11 +126,10 @@ DOMAxis.prototype._update = function () {
         this._createMarkerLine(i);
       }
 
-      this.dateLabels[i].svg.text(moment(date).format(formats[indices[0]]))
-        .attr("x", (i * scale - dateCorrection) / this.msPerPixel)
-        .attr("y", 50);
-      this.markerLines[i].svg.attr("x1", (i * scale - dateCorrection) / this.msPerPixel)
-        .attr("x2", (i * scale - dateCorrection) / this.msPerPixel)
+      this.dateLabels[i].DOM.innerHTML = moment(date).format(formats[indices[0]]);
+      this.dateLabels[i].DOM.style.left = String(Math.round((i * scale - dateCorrection) / this.msPerPixel + 5)) + "px";
+
+      this.markerLines[i].DOM.style.left = String(Math.round((i * scale - dateCorrection) / this.msPerPixel)) + "px";
     }
   }
 };
@@ -155,13 +178,13 @@ function DOMTimeline (container, items, options) {
   this._createItems(items);
 
   this.container = container;
-  this._createSVG();
+  this._createFrame();
 
 
-  this.axis = new DOMAxis(this.range,"svg#main",this.constants);
+  this.axis = new DOMAxis(this.range,this.frame,this.constants);
 
   var me = this;
-  this.hammer = Hammer(document.getElementById("main"), {
+  this.hammer = Hammer(this.frame, {
     prevent_default: true
   });
   this.hammer.on('tap',       me._onTap.bind(me) );
@@ -176,18 +199,18 @@ function DOMTimeline (container, items, options) {
   this.hammer.on('mousewheel',me._onMouseWheel.bind(me) );
   this.hammer.on('DOMMouseScroll',me._onMouseWheel.bind(me) ); // for FF
   this.hammer.on('mousemove', me._onMouseMoveTitle.bind(me) );
-  //this._drawLines();
 
   this._update();
 
 }
 
-DOMTimeline.prototype._createSVG = function() {
-  d3.select("div#visualization")
-    .append("svg").attr("id","main")
-    .attr("width",this.constants.width)
-    .attr("height",this.constants.height)
-    .attr("style","border:1px solid black")
+DOMTimeline.prototype._createFrame = function() {
+  this.frame = document.createElement("div");
+  this.frame.style.width = this.constants.width + "px";
+  this.frame.style.height = this.constants.height + "px";
+  this.frame.style.position = "relative";
+  this.frame.className = "mainFrame";
+  this.container.appendChild(this.frame);
 };
 
 DOMTimeline.prototype._createItems = function (items) {
@@ -299,10 +322,10 @@ DOMTimeline.prototype._getActiveItems = function() {
   for (var itemId in this.activeItems) {
     if (this.activeItems.hasOwnProperty(itemId)) {
       if (this.activeItems[itemId].active == false) {
-        this.activeItems[itemId].svg.remove();
-        this.activeItems[itemId].svg = null;
-        this.activeItems[itemId].svgLine.remove();
-        this.activeItems[itemId].svgLine = null;
+        this.frame.removeChild(this.activeItems[itemId].DOM);
+        this.activeItems[itemId].DOM = null;
+        this.frame.removeChild(this.activeItems[itemId].line);
+        this.activeItems[itemId].line = null;
         delete this.activeItems[itemId];
       }
     }
@@ -313,39 +336,38 @@ DOMTimeline.prototype._getActiveItems = function() {
 DOMTimeline.prototype._updateItems = function() {
   for (var i = 0; i < this.sortedActiveItems.length; i++) {
     var item = this.sortedActiveItems[i];
-    if (item.svg == null) {
-//      item.svg = d3.select("svg#main")
-//                   .append("rect")
-//                   .attr("class","item")
-//                   .style("stroke", "rgb(6,120,155)")
-//                   .style("fill", "rgb(6,120,155)");
-      item.svg = d3.select("svg#main")
-        .append("foreignObject");
-      item.svgContent = item.svg.append("xhtml:body")
-        .style("font", "14px 'Helvetica Neue'")
-        .style("background-color", "#ff00ff")
-        .html("<h1>An HTML Foreign Object in SVG</h1><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec eu enim quam. Quisque nisi risus, sagittis quis tempor nec, aliquam eget neque. Nulla bibendum semper lorem non ullamcorper. Nulla non ligula lorem. Praesent porttitor, tellus nec suscipit aliquam, enim elit posuere lorem, at laoreet enim ligula sed tortor. Ut sodales, urna a aliquam semper, nibh diam gravida sapien, sit amet fermentum purus lacus eget massa. Donec ac arcu vel magna consequat pretium et vel ligula. Donec sit amet erat elit. Vivamus eu metus eget est hendrerit rutrum. Curabitur vitae orci et leo interdum egestas ut sit amet dui. In varius enim ut sem posuere in tristique metus ultrices.<p>Integer mollis massa at orci porta vestibulum. Pellentesque dignissim turpis ut tortor ultricies condimentum et quis nibh. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer euismod lorem vulputate dui pharetra luctus. Sed vulputate, nunc quis porttitor scelerisque, dui est varius ipsum, eu blandit mauris nibh pellentesque tortor. Vivamus ultricies ante eget ipsum pulvinar ac tempor turpis mollis. Morbi tortor orci, euismod vel sagittis ac, lobortis nec est. Quisque euismod venenatis felis at dapibus. Vestibulum dignissim nulla ut nisi tristique porttitor. Proin et nunc id arcu cursus dapibus non quis libero. Nunc ligula mi, bibendum non mattis nec, luctus id neque. Suspendisse ut eros lacus. Praesent eget lacus eget risus congue vestibulum. Morbi tincidunt pulvinar lacus sed faucibus. Phasellus sed vestibulum sapien.");
+    if (item.DOM == null) {
+      item.DOM = document.createElement("div");
+      item.DOM.className = "item";
+      item.DOM.style.position = "absolute";
+      item.DOM.style.display = "inline";
+      item.DOM.innerHTML = "hello world";
+      this.frame.appendChild(item.DOM);
 
+      item.width = item.DOM.offsetWidth;
+      item.DOM.style.width = item.width + "px";
 
 
       if (item.end == 0) {
-        item.svgLine = d3.select("svg#main")
-                         .append("line")
-                         .attr("y1",this.constants.barHeight)
-                         .style("stroke", "rgb(200,200,255)")
-                         .style("stroke-width", 3)
+        item.line = document.createElement("div");
+        item.line.className = "itemLine";
+        item.line.style.position = "absolute";
+        item.line.style.width = "2px";
+        item.line.style.top = this.constants.barHeight + "px"
+        item.line.style.display = "inline";
+        this.frame.appendChild(item.line);
       }
     }
-    item.svg.attr('width', item.getLength(this.axis.msPerPixel))
-      .attr("x", this._getXforItem(item))
-      .attr("y", this._getYforItem(item, i))
+    item.DOM.style.left = this._getXforItem(item) + "px";
+    item.DOM.style.top = (this._getYforItem(item,i) + this.constants.barHeight) + "px";
 
-
-      .attr('height', 25);
     if (item.end == 0) {
-      item.svgLine.attr('y2',item.y)
-                  .attr('x1',item.timeX)
-                  .attr('x2',item.timeX)
+      item.line.style.height = item.y + "px";
+      item.line.style.left = item.timeX + "px";
+    }
+    else {
+      item.getLength(this.axis.msPerPixel);
+      item.DOM.style.width = item.width + "px";
     }
   }
 };

@@ -43,8 +43,8 @@ function Item(properties, constants) {
     this.duration = this.end - this.start;
   }
 
-  this.svg = null;
-  this.svgLine = null;
+  this.DOM = null;
+  this.line = null;
 }
 
 
@@ -79,6 +79,6 @@ Item.prototype.convertDatesToUNIX = function() {
 }
 
 Item.prototype.getLength = function(msPerPixel) {
-  this.width = Math.max(40,this.duration/msPerPixel);
+  this.width = Math.round(this.duration/msPerPixel);
   return this.width;
 }
